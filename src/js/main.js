@@ -6,30 +6,9 @@
 const STORAGE_KEY = 'CONAGUA_EXPEDIENTES_DATA_V1';
 const DB_NAME = 'sqlite:conagua_local.db';
 
-// --- GESTOR DE ALMACENAMIENTO PERSISTENTE (OFFLINE-FIRST) ---
+// --- GESTOR DE ALMACENAMIENTO PERSISTENTE ---
 const StorageManager = {
-  datosSemilla: [
-    {
-      idSys: 'SYS-R9B2X1', id: 'EXP-CNA-001', titulo: 'TIT-2026-X89C', titular: 'Ejido La Victoria', area: 'TECNICA', observacion: 'Falta revision de firmas y anexos tecnicos.',
-      fechaRegistro: '20/09/2026', tsRegistro: Date.now() - 864000000, tiempo: '25/09/2026 10:00 AM', dateISO: '2026-09-25', lastModified: Date.now() - 432000000, enTablero: true,
-      historial: [
-        { ts: Date.now() - 432000000, tipo: 'movimiento', usuario: 'Admin Local', tituloActual: 'TIT-2026-X89C', origen: 'ARCHIVO', destino: 'TECNICA', fecha: '25/09/2026 10:00 AM', nota: 'Ingreso a bandeja para revision tecnica', iso: '2026-09-25' },
-        { ts: Date.now() - 518400000, tipo: 'observacion', usuario: 'Admin Local', tituloActual: 'TIT-2026-X89C', previo: 'Ninguna', actual: 'Falta revision de firmas', fecha: '24/09/2026 14:10 PM', nota: 'Anadido durante revision', iso: '2026-09-24' },
-        { ts: Date.now() - 518400000, tipo: 'titulo', usuario: 'Admin Local', tituloActual: 'TIT-2026-X89C', previo: 'TIT-2026-X89B', actual: 'TIT-2026-X89C', fecha: '24/09/2026 14:00 PM', nota: 'Reporte tecnico preliminar agregado', iso: '2026-09-24' },
-        { ts: Date.now() - 864000000, tipo: 'movimiento', usuario: 'Admin Local', tituloActual: 'TIT-2026-X89A', origen: 'Nuevo', destino: 'ARCHIVO', fecha: '20/09/2026 09:00 AM', nota: 'Creacion de expediente', iso: '2026-09-20' }
-      ]
-    },
-    {
-      idSys: 'SYS-M4L9Q2', id: 'EXP-CNA-015', titulo: 'ACTA-INS-992', titular: 'Desarrollos Norte S.A.', area: 'INSPECCION', observacion: 'URGENTE: Inspección en sitio requerida antes del viernes por denuncia anónima.',
-      fechaRegistro: '01/10/2026', tsRegistro: Date.now() - 345600000, tiempo: '01/10/2026 11:30 AM', dateISO: '2026-10-01', lastModified: Date.now() - 345600000, enTablero: true,
-      historial: []
-    },
-    {
-      idSys: 'SYS-K1P7T8', id: 'EXP-CNA-022', titulo: 'RESOLUCION-04B', titular: 'Municipio San Juan', area: 'JURIDICO', observacion: 'Solo falta firma autógrafa.',
-      fechaRegistro: '03/10/2026', tsRegistro: Date.now() - 172800000, tiempo: '03/10/2026 09:15 AM', dateISO: '2026-10-03', lastModified: Date.now() - 172800000, enTablero: true,
-      historial: []
-    }
-  ],
+  datosSemilla: [], // Sistema en blanco para producción
 
   cargar() {
     try {
@@ -40,7 +19,6 @@ const StorageManager = {
     } catch (e) {
       console.warn("Aviso al leer almacenamiento local:", e);
     }
-    // Si es primera vez, guarda las semillas y las retorna
     this.guardar(this.datosSemilla);
     return this.datosSemilla;
   },
