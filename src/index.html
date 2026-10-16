@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CONAGUA - Gestor Local de Expedientes</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/kanban.css">
+  <link rel="stylesheet" href="css/tables.css">
+  <link rel="stylesheet" href="css/modals.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">Gestor Local de Expedientes</div>
+  <div class="topbar-actions">
+  <button class="btn-filled" onclick="abrirModalCrearExpediente()">+ Registrar Expediente</button>
+  <button class="btn-tonal" onclick="abrirModalAjustes()">Ajustes</button>
+  <span style="font-size: 14px; color: var(--md-sys-color-on-surface-variant); font-weight: 500;">Administrador Local</span>
+</div>
+</div>
+
+<div class="app-container">
+  <div class="sidebar">
+    <div class="sidebar-header-row">
+      <h2 id="sidebarTitle">Archivo General</h2>
+      <button class="btn-tonal" onclick="abrirModalInventario()">Ver todo</button>
+    </div>
+    
+    <select class="control-modern" id="sidebarAreaFilter" onchange="render()">
+      <option value="todas">Todas las ubicaciones</option>
+      <option value="ARCHIVO">Solo en Archivo Fisico</option>
+      <option value="CIS">Centro Integral de Servicios</option>
+      <option value="DICTAMINACION">Dictaminacion</option>
+      <option value="SUBDIRECTOR">Subdireccion Adm. Agua</option>
+      <option value="INFRACCIONES">Calificacion de Infracciones</option>
+      <option value="INSPECCION">Inspeccion</option>
+      <option value="TECNICA">Tecnica</option>
+      <option value="JURIDICO">Juridico</option>
+      <option value="DIRECCION">Direccion</option>
+    </select>
+    
+    <input type="text" class="search-box" id="searchBox" placeholder="Buscar ID, Titulo, No. Exp, Obs..." oninput="render()">
+
+    <div class="section-container" id="inventory-list"></div>
+    
+    <div class="sidebar-header-row" style="margin-top: 16px;">
+      <h2>Actividad Global</h2>
+      <button class="btn-tonal" onclick="abrirModalAuditoriaGlobal()">Registro Completo</button>
+    </div>
+    <div class="logs-box" id="logs-list"></div>
+  </div>
+
+  <div class="main-content">
+    <div class="board-header-bar">
+      <h2 id="boardHeaderTitle">Tablero de Circulacion Activa</h2>
+      <div class="filter-header">
+        <div class="filter-left">
+          <input type="text" class="search-box" id="boardSearchBox" placeholder="Filtrar en tablero (Busca y oculta columnas vacías)..." oninput="render()" style="height: 40px; padding: 0 16px;">
+        </div>
+        <div class="filter-right">
+          <button class="compact-toggle-btn" id="btnCompactToggle" onclick="toggleCompactMode()">Vista: Ultra Compacta</button>
+          
+          <select class="control-modern" id="boardAreaFilter" onchange="render()" style="height: 40px; padding: 0 16px;">
+            <option value="todas">Todas las Areas</option>
+            <option value="CIS">CIS</option>
+            <option value="DICTAMINACION">Dictaminacion</option>
+            <option value="SUBDIRECTOR">Subdireccion Adm. Agua</option>
+            <option value="INFRACCIONES">Infracciones</option>
+            <option value="INSPECCION">Inspeccion</option>
+            <option value="TECNICA">Tecnica</option>
+            <option value="JURIDICO">Juridico</option>
+            <option value="DIRECCION">Direccion</option>
+          </select>
+          <input type="date" class="search-box" id="boardDateFilter" onchange="render()" style="width: 140px; height: 40px; padding: 0 12px;">
+          <div class="view-switcher">
+            <button class="view-btn active" id="btnKanban" onclick="cambiarVista('kanban')">Kanban</button>
+            <button class="view-btn" id="btnTimeline" onclick="cambiarVista('timeline')">Tiempo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view-container" id="viewKanban"><div class="kanban-columns-container" id="kanbanColumnsContainer"></div></div>
+    <div class="view-container" id="viewTimeline" style="display: none;"><div class="timeline-container" id="timelineListContainer"></div></div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<!-- MODAL: ARCHIVO GENERAL -->
+<div class="modal-overlay" id="modalInventario">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <h2>Archivo General Completo</h2>
+        <button class="btn-card-outline" onclick="limpiarFiltrosInventario()" id="btnLimpiarFiltrosInv" style="display:none;">Limpiar Filtros</button>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <button class="btn-filled" onclick="abrirModalCrearExpediente()">Registrar Nuevo Expediente</button>
+        <button class="control-modern" onclick="cerrarModalInventario()">Cerrar</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items:center; flex-wrap: wrap;">
+        <input type="text" class="search-box" id="modalSearchBox" placeholder="Busqueda libre general..." oninput="render()" style="flex-grow:1; max-width: 260px;">
+        <select class="control-modern" id="modalAreaFilter" onchange="render()">
+          <option value="todas">Todas las Areas</option>
+          <option value="ARCHIVO">En Archivo</option>
+          <option value="CIS">CIS</option>
+          <option value="DICTAMINACION">Dictaminacion</option>
+          <option value="SUBDIRECTOR">Sub. Adm. Agua</option>
+          <option value="INFRACCIONES">Infracciones</option>
+          <option value="INSPECCION">Inspeccion</option>
+          <option value="TECNICA">Tecnica</option>
+          <option value="JURIDICO">Juridico</option>
+          <option value="DIRECCION">Direccion</option>
+        </select>
+        <div style="display:flex; align-items:center; gap:8px;"><span style="font-weight:500; font-size:13px;">Desde:</span><input type="date" class="search-box" id="modalDateFrom" onchange="render()" style="width: 130px; height:40px;"></div>
+        <div style="display:flex; align-items:center; gap:8px;"><span style="font-weight:500; font-size:13px;">Hasta:</span><input type="date" class="search-box" id="modalDateTo" onchange="render()" style="width: 130px; height:40px;"></div>
+        <select class="control-modern" id="modalSortOrder" onchange="render()">
+          <option value="desc">Mas Recientes (Registro)</option>
+          <option value="asc">Mas Antiguos (Registro)</option>
+        </select>
+      </div>
+      <div class="modal-list-container">
+        <table class="compact-table">
+          <thead>
+            <tr>
+              <th>ID Sistema<br><input type="text" class="col-filter-input" id="inv-f-sys" placeholder="Filtrar..." oninput="render()"></th>
+              <th style="min-width:140px;">Titulo / Clave Externa<br><input type="text" class="col-filter-input" id="inv-f-titulo" placeholder="Filtrar..." oninput="render()"></th>
+              <th>No. Expediente<br><input type="text" class="col-filter-input" id="inv-f-exp" placeholder="Filtrar..." oninput="render()"></th>
+              <th>Titular<br><input type="text" class="col-filter-input" id="inv-f-titular" placeholder="Filtrar..." oninput="render()"></th>
+              <th style="min-width:140px;">Observaciones libres<br><input type="text" class="col-filter-input" id="inv-f-obs" placeholder="Filtrar..." oninput="render()"></th>
+              <th>Area Actual<br><input type="text" class="col-filter-input" id="inv-f-area" placeholder="Filtrar..." oninput="render()"></th>
+              <th>F. Registro<br><input type="text" class="col-filter-input" id="inv-f-fecha" placeholder="Filtrar..." oninput="render()"></th>
+              <th style="min-width: 220px;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="modal-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: AUDITORIA GLOBAL -->
+<div class="modal-overlay" id="modalAuditoriaGlobal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <h2>Centro de Auditoria e Historial Global</h2>
+        <button class="btn-card-outline" onclick="limpiarFiltrosAuditoria()" id="btnLimpiarFiltros" style="display:none;">Limpiar Filtros</button>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div style="display: flex; border-right: 1px solid var(--md-sys-color-outline-variant); padding-right: 12px; gap: 8px;">
+          <button class="btn-tonal" style="background:#e8f0fe; color:#1a73e8;" onclick="exportarAuditoriaCSV()" title="Descargar como CSV">CSV</button>
+          <button class="btn-tonal" style="background:#e6f4ea; color:#137333;" onclick="exportarAuditoriaExcel()" title="Descargar reporte en formato Excel">Excel</button>
+          <button class="btn-tonal" style="background:#fce8e6; color:#c5221f;" onclick="exportarAuditoriaPDF()" title="Imprimir / Guardar en PDF">PDF</button>
+        </div>
+        <button class="control-modern" onclick="cerrarModalAuditoriaGlobal()">Cerrar</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div style="display: flex; gap: 16px; margin-bottom: 20px; align-items:center; justify-content:space-between; flex-wrap: wrap;">
+        <div class="view-switcher" style="height: 44px;">
+          <button class="view-btn active" id="tabDocGlobal" onclick="cambiarTabAuditoria('documental')">Historial Documental y Obs.</button>
+          <button class="view-btn" id="tabMovGlobal" onclick="cambiarTabAuditoria('transferencias')">Historial de Transferencias</button>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items:center;">
+          <input type="text" class="search-box" id="auditSearchBox" placeholder="Busqueda global..." oninput="renderAuditoria()" style="width: 240px;">
+          <div style="display:flex; align-items:center; gap:8px;"><span style="font-weight:500; font-size:13px;">Desde:</span><input type="date" class="search-box" id="auditDateFrom" onchange="renderAuditoria()" style="width: 130px; height:40px;"></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="font-weight:500; font-size:13px;">Hasta:</span><input type="date" class="search-box" id="auditDateTo" onchange="renderAuditoria()" style="width: 130px; height:40px;"></div>
+        </div>
+      </div>
+
+      <div class="modal-list-container">
+        <table class="compact-table" id="tablaAuditoria">
+          <thead id="audit-table-head"></thead>
+          <tbody id="audit-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- POPUPS DE ACCION / DETALLES -->
+<div class="action-modal-overlay" id="actionModalOverlay">
+  <div class="action-modal-container">
+    <h3 id="actionModalTitle">Titulo</h3><p id="actionModalSubtitle">Subtitulo</p>
+    <div id="actionModalFieldsContainer" style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;"></div>
+    <div class="action-modal-actions"><button class="control-modern" onclick="cerrarActionModal()">Cancelar</button><button class="btn-filled" id="actionModalSubmitBtn" onclick="ejecutarAccionPopup()">Guardar Cambios</button></div>
+  </div>
+</div>
+
+<div class="action-modal-overlay" id="detallesModalOverlay">
+  <div class="action-modal-container" style="max-width: 780px;">
+    <h3>Detalles del Expediente</h3><p id="detallesSubtitle" style="margin-bottom: 8px;">Auditoria individual.</p>
+    <div style="background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); padding: 16px; border-radius: 12px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <span style="font-size: 12px; font-weight: 500; opacity: 0.8;">Titulo Actual Activo:</span>
+        <div id="detallesTituloActual" style="font-size: 20px; font-weight: 700; margin: 4px 0;">TIT-XXXX</div>
+        <div id="detallesIdSysActual" class="sys-id-tag" style="background: rgba(0,0,0,0.1); color: var(--md-sys-color-on-primary-container);">SYS-XXXX</div>
+      </div>
+      <div style="text-align:right;">
+        <span style="font-size: 12px; font-weight: 500; opacity: 0.8;">Fecha de Registro Original:</span>
+        <div id="detallesFechaRegistro" style="font-size: 14px; font-weight: 700;">--/--/----</div>
+      </div>
+    </div>
+    
+    <div class="mini-bitacora-grid">
+      <div class="mini-bitacora-col"><h4>Historial Documental y Obs.</h4><div id="detallesMiniBitacoraTitulos"></div></div>
+      <div class="mini-bitacora-col"><h4>Historial de Transferencias</h4><div id="detallesMiniBitacoraMovimientos"></div></div>
+    </div>
+
+    <div style="margin-top: 16px; display: flex; justify-content: flex-start;">
+      <button class="btn-tonal" id="btnVerEnAuditoriaGlobal" onclick="" style="background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);">Ver en Historial y Auditoria Global</button>
+    </div>
+
+    <div class="action-modal-actions" style="margin-top: 16px;"><button class="control-modern" onclick="cerrarDetallesModal()">Cerrar Historial</button></div>
+  </div>
+</div>
+
+<!-- MODAL: AJUSTES Y GESTIÓN DE RESPALDOS -->
+<div class="action-modal-overlay" id="modalAjustesOverlay">
+  <div class="action-modal-container" style="max-width: 620px;">
+    <h3>Gestión de Base de Datos y Respaldos</h3>
+    <p>Administra copias de seguridad locales y puntos de restauración.</p>
+
+    <!-- Respaldo Manual -->
+    <div style="background: var(--md-sys-color-surface-container); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-weight: 700; color: var(--md-sys-color-primary);">Copia de Seguridad Manual</span>
+      <span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);">Descarga un archivo con toda la información documental y de auditoría para resguardo externo.</span>
+      <div style="display: flex; gap: 10px; margin-top: 4px;">
+        <button class="btn-filled" onclick="crearRespaldoDescargable()">Descargar Respaldo (.JSON)</button>
+        <button class="btn-tonal" onclick="document.getElementById('inputImportarRespaldo').click()">Restaurar desde Archivo</button>
+        <input type="file" id="inputImportarRespaldo" accept=".json" style="display: none;" onchange="restaurarRespaldoDesdeArchivo(event)">
+      </div>
+    </div>
+
+    <!-- Puntos de Restauración Automática -->
+    <div style="margin-top: 6px;">
+      <span style="font-weight: 700; font-size: 13px; color: var(--md-sys-color-on-surface);">Instantáneas Automáticas (Rotativas - Máx 3):</span>
+      <div id="listaSnapshotsAuto" style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;"></div>
+    </div>
+
+    <div class="action-modal-actions" style="margin-top: 10px;">
+      <button class="control-modern" onclick="cerrarModalAjustes()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+
+</body>
+</html>

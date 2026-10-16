@@ -1,0 +1,22 @@
+# Dependencias y compilados (Evita subir gigabytes de temporales)
+node_modules/
+src-tauri/target/
+dist/
+
+# Bases de datos locales
+*.db
+*.sqlite
+*.sqlite3
+
+# Respaldos y datos exportados
+*.csv
+*.xls
+*.xlsx
+*.pdf
+Respaldo_*.json
+*.bak
+
+# Variables de entorno o llaves
+.env
+*.pem
+*.key
