@@ -227,23 +227,35 @@
 <div class="action-modal-overlay" id="modalAjustesOverlay">
   <div class="action-modal-container" style="max-width: 620px;">
     <h3>Gestión de Base de Datos y Respaldos</h3>
-    <p>Administra copias de seguridad locales y puntos de restauración.</p>
+    <p>Administra copias de seguridad locales, carpeta destino y puntos de restauración.</p>
 
     <!-- Respaldo Manual -->
     <div style="background: var(--md-sys-color-surface-container); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
       <span style="font-weight: 700; color: var(--md-sys-color-primary);">Copia de Seguridad Manual</span>
-      <span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);">Descarga un archivo con toda la información documental y de auditoría para resguardo externo.</span>
-      <div style="display: flex; gap: 10px; margin-top: 4px;">
-        <button class="btn-filled" onclick="crearRespaldoDescargable()">Descargar Respaldo (.JSON)</button>
-        <button class="btn-tonal" onclick="document.getElementById('inputImportarRespaldo').click()">Restaurar desde Archivo</button>
+      <span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);">Elige en qué carpeta guardar el respaldo completo o selecciona un archivo previo para restaurar.</span>
+      <div style="display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap;">
+        <button class="btn-filled" onclick="crearRespaldoDescargable()">Guardar Respaldo (.JSON)...</button>
+        <button class="btn-tonal" onclick="abrirSelectorRestaurarRespaldo()">Restaurar desde Archivo...</button>
         <input type="file" id="inputImportarRespaldo" accept=".json" style="display: none;" onchange="restaurarRespaldoDesdeArchivo(event)">
       </div>
     </div>
 
+<!-- Carpeta Fija para Auto-Respaldos en Disco -->
+    <div style="background: var(--md-sys-color-surface-container); padding: 14px 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+        <span style="font-weight: 700; font-size: 13px; color: var(--md-sys-color-on-surface);">Carpeta en Disco para Auto-Respaldos:</span>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn-card-outline" onclick="seleccionarCarpetaAutoRespaldo()">Elegir Carpeta...</button>
+          <button class="btn-card-outline" id="btnLimpiarCarpetaBackup" style="display:none;" onclick="limpiarCarpetaAutoRespaldo()">Quitar</button>
+        </div>
+      </div>
+      <div id="rutaCarpetaBackupTexto" style="font-family: monospace; font-size: 11px; color: var(--md-sys-color-on-surface-variant); word-break: break-all;">No configurada (solo memoria interna rotativa)</div>
+    </div>
+
     <!-- Puntos de Restauración Automática -->
-    <div style="margin-top: 6px;">
-      <span style="font-weight: 700; font-size: 13px; color: var(--md-sys-color-on-surface);">Instantáneas Automáticas (Rotativas - Máx 3):</span>
-      <div id="listaSnapshotsAuto" style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;"></div>
+    <div style="margin-top: 4px;">
+      <span style="font-weight: 700; font-size: 13px; color: var(--md-sys-color-on-surface);">Instantáneas Automáticas Internas (Rotativas - Máx 3):</span>
+      <div id="listaSnapshotsAuto" style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 160px; overflow-y: auto;"></div>
     </div>
 
     <div class="action-modal-actions" style="margin-top: 10px;">
