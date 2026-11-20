@@ -12,8 +12,20 @@
 </head>
 <body>
 
+<!-- Barra superior de ventana única -->
+<div class="window-titlebar" data-tauri-drag-region>
+  <div class="window-titlebar-left" data-tauri-drag-region>
+    <span data-tauri-drag-region>Conagua</span>
+  </div>
+  <div class="window-titlebar-controls">
+    <button type="button" class="win-btn" title="Minimizar" onclick="window.__TAURI__.window.getCurrentWindow().minimize()">&#x2014;</button>
+    <button type="button" class="win-btn" title="Maximizar / Restaurar" onclick="window.__TAURI__.window.getCurrentWindow().toggleMaximize()">&#x2610;</button>
+    <button type="button" class="win-btn win-btn-close" title="Cerrar" onclick="window.__TAURI__.window.getCurrentWindow().close()">&#x2715;</button>
+  </div>
+</div>
+
 <div class="topbar">
-  <div class="topbar-title">Gestor Local de Expedientes</div>
+  <div class="topbar-title">Gestor de Expedientes</div>
   <div class="topbar-actions">
   <button class="btn-filled" onclick="abrirModalCrearExpediente()">+ Registrar Expediente</button>
   <button class="btn-tonal" onclick="abrirModalAjustes()">Ajustes</button>
@@ -32,6 +44,7 @@
       <option value="todas">Todas las ubicaciones</option>
       <option value="ARCHIVO">Solo en Archivo Fisico</option>
       <option value="CIS">Centro Integral de Servicios</option>
+      <option value="ATENCION">Atención a Usuarios</option>
       <option value="DICTAMINACION">Dictaminacion</option>
       <option value="SUBDIRECTOR">Subdireccion Adm. Agua</option>
       <option value="INFRACCIONES">Calificacion de Infracciones</option>
@@ -65,6 +78,7 @@
           <select class="control-modern" id="boardAreaFilter" onchange="render()" style="height: 40px; padding: 0 16px;">
             <option value="todas">Todas las Areas</option>
             <option value="CIS">CIS</option>
+            <option value="ATENCION">Atención a Usuarios</option>
             <option value="DICTAMINACION">Dictaminacion</option>
             <option value="SUBDIRECTOR">Subdireccion Adm. Agua</option>
             <option value="INFRACCIONES">Infracciones</option>
@@ -109,6 +123,7 @@
           <option value="todas">Todas las Areas</option>
           <option value="ARCHIVO">En Archivo</option>
           <option value="CIS">CIS</option>
+          <option value="ATENCION">Atención a Usuarios</option>
           <option value="DICTAMINACION">Dictaminacion</option>
           <option value="SUBDIRECTOR">Sub. Adm. Agua</option>
           <option value="INFRACCIONES">Infracciones</option>

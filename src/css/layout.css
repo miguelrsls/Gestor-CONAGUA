@@ -36,6 +36,7 @@
 .toast-msg.show { opacity: 1; transform: translateY(0); }
 .badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; }
 .badge-CIS { background-color: var(--area-cis-bg); color: var(--area-cis-text); }
+.badge-ATENCION { background-color: var(--area-ate-bg); color: var(--area-ate-text); }
 .badge-DICTAMINACION { background-color: var(--area-dic-bg); color: var(--area-dic-text); }
 .badge-SUBDIRECTOR { background-color: var(--area-saa-bg); color: var(--area-saa-text); }
 .badge-INFRACCIONES { background-color: var(--area-inf-bg); color: var(--area-inf-text); }
@@ -46,3 +47,56 @@
 .badge-ARCHIVO { background-color: var(--area-arc-bg); color: var(--area-arc-text); }
 .badge-Nuevo { background-color: #f1f3f4; color: #444746; border: 1px dashed #747775; }
 .sys-id-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: rgba(0,0,0,0.06); padding: 3px 8px; border-radius: 6px; font-weight: 500; color: inherit; opacity: 0.8; display: inline-flex; align-items: center; gap: 4px; }
+
+/* Barra superior de ventana personalizada */
+.window-titlebar {
+  height: 42px;
+  min-height: 42px;
+  flex-shrink: 0;
+  background-color: #181c22;
+  color: #f1f3f4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 14px;
+  user-select: none;
+  z-index: 10000;
+}
+
+.window-titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  height: 100%;
+  flex-grow: 1;
+}
+
+.window-titlebar-controls {
+  display: flex;
+  height: 100%;
+}
+
+.win-btn {
+  width: 48px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: #e3e3e3;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.win-btn:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.win-btn-close:hover {
+  background-color: #e81123;
+  color: #ffffff;
+}

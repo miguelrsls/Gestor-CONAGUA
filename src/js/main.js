@@ -11,6 +11,7 @@ const MAX_SNAPSHOTS = 3;
 const AREAS_CATALOGO = [
   { val: '', label: 'Todas' },
   { val: 'CIS', label: 'CIS' },
+  { val: 'ATENCION', label: 'Atención a Usuarios' },
   { val: 'DICTAMINACION', label: 'Dictaminación' },
   { val: 'SUBDIRECTOR', label: 'Subdirector' },
   { val: 'INFRACCIONES', label: 'Infracciones' },
@@ -179,6 +180,7 @@ function getBadgeClass(area) {
 function getCardColorClass(area) {
   const map = {
     'CIS': 'bg-cis',
+    'ATENCION': 'bg-ate',
     'DICTAMINACION': 'bg-dic',
     'SUBDIRECTOR': 'bg-saa',
     'INFRACCIONES': 'bg-inf',
@@ -346,7 +348,7 @@ function actualizarDatalistsGlobales() {
   });
 }
 
-// --- MOTOR VIRTUAL DRAG & DROP ---
+// --- MOTOR VIRTUAL DRAG & DROP CON AUTO-SCROLL HORIZONTAL ---
 let dragState = {
   isDragging: false,
   hasMoved: false,
@@ -413,6 +415,43 @@ function onDragMove(e) {
   }
 }
 
+function procesarAutoScrollKanban(clientX) {
+  const kanbanCont = document.getElementById('kanbanColumnsContainer');
+  const viewKanban = document.getElementById('viewKanban');
+  if (!kanbanCont && !viewKanban) return false;
+
+  let scrollEl = null;
+  if (kanbanCont && kanbanCont.scrollWidth > kanbanCont.clientWidth) {
+    scrollEl = kanbanCont;
+  } else if (viewKanban && viewKanban.scrollWidth > viewKanban.clientWidth) {
+    scrollEl = viewKanban;
+  } else if (kanbanCont && kanbanCont.parentElement && kanbanCont.parentElement.scrollWidth > kanbanCont.parentElement.clientWidth) {
+    scrollEl = kanbanCont.parentElement;
+  }
+
+  if (!scrollEl) return false;
+
+  const rect = scrollEl.getBoundingClientRect();
+  const zonaDeteccion = 110;
+  const velocidadMax = 18;
+  let deltaX = 0;
+
+  if (clientX > rect.right - zonaDeteccion) {
+    const intensidad = Math.min(1, Math.max(0.15, (clientX - (rect.right - zonaDeteccion)) / zonaDeteccion));
+    deltaX = Math.ceil(velocidadMax * intensidad);
+  } else if (clientX < rect.left + zonaDeteccion) {
+    const intensidad = Math.min(1, Math.max(0.15, ((rect.left + zonaDeteccion) - clientX) / zonaDeteccion));
+    deltaX = -Math.ceil(velocidadMax * intensidad);
+  }
+
+  if (deltaX !== 0) {
+    const scrollAnterior = scrollEl.scrollLeft;
+    scrollEl.scrollLeft += deltaX;
+    return scrollEl.scrollLeft !== scrollAnterior;
+  }
+  return false;
+}
+
 function updateDragVisuals() {
   if (!dragState.isDragging || !dragState.cloneEl) {
     dragRAF = null;
@@ -421,6 +460,9 @@ function updateDragVisuals() {
   let x = currentMouseX - dragState.offsetX;
   let y = currentMouseY - dragState.offsetY;
   dragState.cloneEl.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(3deg)`;
+
+  const huboScroll = procesarAutoScrollKanban(currentMouseX);
+
   let elUnder = document.elementFromPoint(currentMouseX, currentMouseY);
   let col = elUnder ? elUnder.closest('.kanban-col') : null;
   if (dragState.hoverCol !== col) {
@@ -428,7 +470,12 @@ function updateDragVisuals() {
     if (col) col.classList.add('drag-over');
     dragState.hoverCol = col;
   }
-  dragRAF = null;
+
+  if (huboScroll) {
+    dragRAF = requestAnimationFrame(updateDragVisuals);
+  } else {
+    dragRAF = null;
+  }
 }
 
 function onDragEnd() {
@@ -521,6 +568,7 @@ function abrirModalCrearExpediente() {
       <label>Área de Inicio:</label>
       <select class="control-modern" id="popupNewArea" style="width:100%; height:40px;">
         <option value="CIS">CIS (Entrada / Tablero)</option>
+        <option value="ATENCION">Atención a Usuarios</option>
         <option value="DICTAMINACION">Dictaminación</option>
         <option value="SUBDIRECTOR">Subdirección Adm. Agua</option>
         <option value="INFRACCIONES">Infracciones</option>
@@ -589,21 +637,22 @@ function moverExpediente(id, areaDestinoForzada) {
 
   let diaHoy = obtenerFechaYHora().iso;
   let areasOpciones = [
-    'CIS',
-    'DICTAMINACION',
-    'SUBDIRECTOR',
-    'INFRACCIONES',
-    'INSPECCION',
-    'TECNICA',
-    'JURIDICO',
-    'DIRECCION',
-    'ARCHIVO'
+    { val: 'CIS', label: 'CIS' },
+    { val: 'ATENCION', label: 'Atención a Usuarios' },
+    { val: 'DICTAMINACION', label: 'Dictaminación' },
+    { val: 'SUBDIRECTOR', label: 'Subdirección Adm. Agua' },
+    { val: 'INFRACCIONES', label: 'Infracciones' },
+    { val: 'INSPECCION', label: 'Inspección' },
+    { val: 'TECNICA', label: 'Técnica' },
+    { val: 'JURIDICO', label: 'Jurídico' },
+    { val: 'DIRECCION', label: 'Dirección' },
+    { val: 'ARCHIVO', label: 'Archivo General (Retirar del tablero)' }
   ];
 
   let selectHtml = '<select id="popupSelectDestino" class="control-modern" style="width:100%; height:40px;">';
   areasOpciones.forEach(a => {
-    let selected = (areaDestinoForzada && areaDestinoForzada === a) || (!areaDestinoForzada && exp.area === a) ? 'selected' : '';
-    selectHtml += `<option value="${a}" ${selected}>${a === 'ARCHIVO' ? 'Archivo General (Retirar del tablero)' : a}</option>`;
+    let selected = (areaDestinoForzada && areaDestinoForzada === a.val) || (!areaDestinoForzada && exp.area === a.val) ? 'selected' : '';
+    selectHtml += `<option value="${a.val}" ${selected}>${a.label}</option>`;
   });
   selectHtml += '</select>';
 
@@ -1799,6 +1848,7 @@ function render() {
 
       let columnAreas = [
         { code: 'CIS', title: 'CIS', cls: 'col-cis' },
+        { code: 'ATENCION', title: 'Atención a Usuarios', cls: 'col-ate' },
         { code: 'DICTAMINACION', title: 'Dictaminación', cls: 'col-dic' },
         { code: 'SUBDIRECTOR', title: 'Subdirección S.A.A.', cls: 'col-saa' },
         { code: 'INFRACCIONES', title: 'Infracciones', cls: 'col-inf' },
