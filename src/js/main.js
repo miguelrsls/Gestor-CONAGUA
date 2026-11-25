@@ -513,10 +513,62 @@ function onDragEnd() {
   };
 }
 
-// --- GESTIÓN DE MODALES DE ACCIÓN ---
+// --- GESTIÓN DE MODALES DE ACCIÓN Y VALIDACIÓN DE EXCEPCIONES ---
 let accionPendienteCallback = null;
 
+function asegurarEstilosValidacion() {
+  if (document.getElementById('validationExceptionStyles')) return;
+  const style = document.createElement('style');
+  style.id = 'validationExceptionStyles';
+  style.textContent = `
+    .input-error {
+      border-color: var(--md-sys-color-error, #b3261e) !important;
+      box-shadow: 0 0 0 3px rgba(179, 38, 30, 0.16) !important;
+    }
+    .error-msg-inline {
+      display: none;
+      color: var(--md-sys-color-error, #b3261e);
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 2px;
+      padding-left: 6px;
+    }
+    .error-msg-inline.visible {
+      display: block;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function marcarErrorCampo(inputEl, errEl, mensaje) {
+  if (inputEl) inputEl.classList.add('input-error');
+  if (errEl) {
+    errEl.textContent = mensaje;
+    errEl.classList.add('visible');
+  }
+}
+
+function limpiarErrorCampo(inputEl, errEl) {
+  if (inputEl) inputEl.classList.remove('input-error');
+  if (errEl) {
+    errEl.textContent = '';
+    errEl.classList.remove('visible');
+  }
+}
+
+function vincularLimpiezaError(inputId, errId, evento = 'input') {
+  const inputEl = document.getElementById(inputId);
+  const errEl = document.getElementById(errId);
+  if (!inputEl) return;
+  inputEl.addEventListener(evento, () => {
+    if (evento === 'change' || inputEl.value.trim().length > 0) {
+      limpiarErrorCampo(inputEl, errEl);
+    }
+  });
+}
+
 function abrirActionModal(titulo, subtitulo, camposHTML, onConfirmar) {
+  asegurarEstilosValidacion();
   document.getElementById('actionModalTitle').innerText = titulo;
   document.getElementById('actionModalSubtitle').innerText = subtitulo;
   document.getElementById('actionModalFieldsContainer').innerHTML = camposHTML;
@@ -529,9 +581,11 @@ function cerrarActionModal() {
   accionPendienteCallback = null;
 }
 
-function ejecutarAccionPopup() {
+async function ejecutarAccionPopup() {
   if (accionPendienteCallback) {
-    accionPendienteCallback();
+    const resultado = await accionPendienteCallback();
+    // Si la validación detecta una excepción, aborta el cierre y conserva los datos capturados
+    if (resultado === false) return;
   }
   cerrarActionModal();
 }
@@ -664,10 +718,11 @@ function moverExpediente(id, areaDestinoForzada) {
     <div class="action-modal-form-group">
       <label>Área Destino:</label>
       ${selectHtml}
+      <span id="errPopupSelectDestino" class="error-msg-inline"></span>
     </div>
     <div class="action-modal-form-group">
       <label>Observación opcional:</label>
-      <input type="text" class="search-box" id="popupInputObs" value="${exp.observacion || ''}" placeholder="Actualizar notas del expediente...">
+      <input type="text" class="search-box" id="popupInputObs" value="${escaparAttr(exp.observacion || '')}" placeholder="Actualizar notas del expediente...">
     </div>
     <div class="action-modal-form-group">
       <label>Justificación del Pase (Bitácora):</label>
@@ -676,11 +731,21 @@ function moverExpediente(id, areaDestinoForzada) {
 
   abrirActionModal('Mover Expediente', `Reubicar documento: ${exp.titulo}`, campos, () => {
     let fSeleccionada = document.getElementById('popupFechaAccion').value;
-    let destino = document.getElementById('popupSelectDestino').value;
+    let selectDestino = document.getElementById('popupSelectDestino');
+    let errDestino = document.getElementById('errPopupSelectDestino');
+    let destino = selectDestino.value;
     let nObs = document.getElementById('popupInputObs').value.trim();
     let nota = document.getElementById('popupInputNota').value.trim() || 'Sin justificación';
-    let ts = obtenerFechaYHora(fSeleccionada);
     let areaAnterior = exp.area;
+
+    if (destino === areaAnterior) {
+      marcarErrorCampo(selectDestino, errDestino, 'El expediente ya se encuentra en esta área. Selecciona un destino diferente.');
+      selectDestino.focus();
+      mostrarToast('Error: Selecciona un área destino distinta a la actual.');
+      return false;
+    }
+
+    let ts = obtenerFechaYHora(fSeleccionada);
 
     exp.historial.unshift({
       ts: ts.timestamp,
@@ -720,7 +785,10 @@ function moverExpediente(id, areaDestinoForzada) {
     registrarLog(`Pase (${exp.idSys})`, `${areaAnterior} ➔ ${destino}`);
     mostrarToast(`Expediente movido a ${destino}.`);
     render();
+    return true;
   });
+
+  vincularLimpiezaError('popupSelectDestino', 'errPopupSelectDestino', 'change');
 }
 
 function modificarExpediente(id) {
@@ -736,23 +804,25 @@ function modificarExpediente(id) {
     </div>
     <div class="action-modal-form-group">
       <label>ID Sistema (Inmutable):</label>
-      <input type="text" class="search-box" value="${exp.idSys}" disabled style="background:var(--md-sys-color-surface-container); font-family: monospace;">
+      <input type="text" class="search-box" value="${escaparAttr(exp.idSys)}" disabled style="background:var(--md-sys-color-surface-container); font-family: monospace;">
     </div>
     <div class="action-modal-form-group">
       <label>No. de Expediente:</label>
-      <input type="text" class="search-box" id="popupInputNoExp" value="${exp.id}">
+      <input type="text" class="search-box" id="popupInputNoExp" value="${escaparAttr(exp.id || '')}">
+      <span id="errPopupInputNoExp" class="error-msg-inline"></span>
     </div>
     <div class="action-modal-form-group">
       <label>Título / Clave Principal:</label>
-      <input type="text" class="search-box" id="popupInputTitulo" value="${exp.titulo}" style="font-weight:bold;">
+      <input type="text" class="search-box" id="popupInputTitulo" value="${escaparAttr(exp.titulo || '')}" style="font-weight:bold;">
+      <span id="errPopupInputTitulo" class="error-msg-inline"></span>
     </div>
     <div class="action-modal-form-group">
       <label>Titular:</label>
-      <input type="text" class="search-box" id="popupInputTitular" value="${exp.titular}">
+      <input type="text" class="search-box" id="popupInputTitular" value="${escaparAttr(exp.titular || '')}">
     </div>
     <div class="action-modal-form-group">
       <label>Observaciones:</label>
-      <input type="text" class="search-box" id="popupInputObs" value="${exp.observacion || ''}">
+      <input type="text" class="search-box" id="popupInputObs" value="${escaparAttr(exp.observacion || '')}">
     </div>
     <div class="action-modal-form-group">
       <label>Justificación para Bitácora:</label>
@@ -760,13 +830,42 @@ function modificarExpediente(id) {
     </div>`;
 
   abrirActionModal('Modificar Expediente', `Editar metadatos de ${exp.idSys}`, campos, () => {
+    const inpNoExp = document.getElementById('popupInputNoExp');
+    const inpTit = document.getElementById('popupInputTitulo');
+    const errNoExp = document.getElementById('errPopupInputNoExp');
+    const errTit = document.getElementById('errPopupInputTitulo');
+
     let fSeleccionada = document.getElementById('popupFechaAccion').value;
-    let nNoExp = document.getElementById('popupInputNoExp').value.trim();
-    let nTit = document.getElementById('popupInputTitulo').value.trim();
-    let nTitular = document.getElementById('popupInputTitular').value.trim();
-    let nObs = document.getElementById('popupInputObs').value.trim();
-    let nota = document.getElementById('popupInputNota').value.trim() || 'Actualización manual';
+    let nNoExp = (inpNoExp.value || '').trim();
+    let nTit = (inpTit.value || '').trim();
+    let nTitular = (document.getElementById('popupInputTitular').value || '').trim() || 'Sin Titular';
+    let nObs = (document.getElementById('popupInputObs').value || '').trim();
+    let nota = (document.getElementById('popupInputNota').value || '').trim() || 'Actualización manual';
+
+    // Validación estricta de excepciones antes de modificar memoria o bitácora
+    limpiarErrorCampo(inpNoExp, errNoExp);
+    limpiarErrorCampo(inpTit, errTit);
+
+    let primerCampoInvalido = null;
+
+    if (!nNoExp) {
+      marcarErrorCampo(inpNoExp, errNoExp, 'El No. de Expediente es obligatorio y no puede quedar vacío.');
+      primerCampoInvalido = inpNoExp;
+    }
+
+    if (!nTit) {
+      marcarErrorCampo(inpTit, errTit, 'El Título / Clave Principal es obligatorio y no puede quedar vacío.');
+      if (!primerCampoInvalido) primerCampoInvalido = inpTit;
+    }
+
+    if (primerCampoInvalido) {
+      primerCampoInvalido.focus();
+      mostrarToast('Error: Completa los campos obligatorios antes de guardar.');
+      return false; // Mantiene el modal abierto y aborta el guardado
+    }
+
     let ts = obtenerFechaYHora(fSeleccionada);
+    let huboCambios = false;
 
     if (nTit !== exp.titulo) {
       exp.historial.unshift({
@@ -781,6 +880,7 @@ function modificarExpediente(id) {
         iso: ts.iso
       });
       exp.titulo = nTit;
+      huboCambios = true;
     }
     if (nNoExp !== exp.id) {
       exp.historial.unshift({
@@ -795,6 +895,7 @@ function modificarExpediente(id) {
         iso: ts.iso
       });
       exp.id = nNoExp;
+      huboCambios = true;
     }
     if (nTitular !== exp.titular) {
       exp.historial.unshift({
@@ -809,8 +910,9 @@ function modificarExpediente(id) {
         iso: ts.iso
       });
       exp.titular = nTitular;
+      huboCambios = true;
     }
-    if (exp.observacion !== nObs) {
+    if ((exp.observacion || '') !== nObs) {
       exp.historial.unshift({
         ts: ts.timestamp,
         tipo: 'observacion',
@@ -824,6 +926,12 @@ function modificarExpediente(id) {
       });
       exp.observacion = nObs;
       registrarLog('Observación editada', `Para: ${exp.idSys}`);
+      huboCambios = true;
+    }
+
+    if (!huboCambios) {
+      mostrarToast('No se detectaron cambios en el expediente.');
+      return true;
     }
 
     exp.lastModified = ts.timestamp;
@@ -831,7 +939,11 @@ function modificarExpediente(id) {
     actualizarDatalistsGlobales();
     mostrarToast('Cambios guardados con éxito.');
     render();
+    return true;
   });
+
+  vincularLimpiezaError('popupInputNoExp', 'errPopupInputNoExp');
+  vincularLimpiezaError('popupInputTitulo', 'errPopupInputTitulo');
 }
 
 function abrirDetalles(id) {
